@@ -3,6 +3,44 @@
 <head>
     <title>NCAA Men's Basketball Data</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <style>
+        .sticky-inputs {
+            position: sticky;
+            top: 0;
+            background: #fff;
+            z-index: 1020;
+            padding-bottom: 1rem;
+        }
+        
+        .container {
+            display: flex;
+            justify-content: space-between;
+            max-width: 600px; /* Adjust based on your preference */
+            margin: auto;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .input-group input {
+            margin-bottom: 10px; /* Space between input and button */
+        }
+
+        .input-group pre {
+            text-align: left;
+            width: 90%; /* Adjust the width of the stats display */
+            margin-top: 10px;
+        }
+
+       
+    </style>
     <script>
         let teamsData = []; // Global variable to hold teams data
 
@@ -20,45 +58,74 @@
             });
         }
 
-        function searchTeam() {
-            const searchText = document.getElementById("teamName").value.toLowerCase();
-            const team = teamsData.find(team => 
-            team.name.toLowerCase() === searchText || 
-            (team.alias && team.alias.toLowerCase() === searchText) ||
-            (team.market && team.market.toLowerCase() === searchText)
+        function searchAndCompareTeams() {
+            const searchText1 = document.getElementById("teamName1").value.toLowerCase();
+            const searchText2 = document.getElementById("teamName2").value.toLowerCase();
+            const team1 = teamsData.find(team => 
+            team.name.toLowerCase() === searchText1 || 
+            (team.alias && team.alias.toLowerCase() === searchText1) ||
+            (team.market && team.market.toLowerCase() === searchText1)
             );
-            if (team) {
-                document.getElementById("teamIdDisplay").innerText = "Team ID: " + team.id;
-                getTeamStatistics(team.id);
-            } else {
-                alert("Team not found. Please make sure you have the correct team name, alias, or market.");
-    }
+            const team2 = teamsData.find(team => 
+            team.name.toLowerCase() === searchText2 || 
+            (team.alias && team.alias.toLowerCase() === searchText2) ||
+            (team.market && team.market.toLowerCase() === searchText2)
+            );
+            if (team1 && team2) {
+                 getTeamStatistics(team1.id, 1);
+                 getTeamStatistics(team2.id, 2);
+                } else {
+                    alert("One or both teams not found. Please make sure you have the correct team names, aliases, or markets.");
+                }
 }
 
-        function getTeamStatistics(teamId) {
-            const seasonYear = "2023";
-            const seasonType = "REG";
-            const url = `/get_team_statistics/${seasonYear}/${seasonType}/${teamId}`;
+function getTeamStatistics(teamId, teamNumber) {
+    const seasonYear = "2023";
+    const seasonType = "REG";
+    const url = `/get_team_statistics/${seasonYear}/${seasonType}/${teamId}`;
 
-            $.get(url, function(data) {
-                const displayData = {
-                market: data.market,
-                name: data.name,
-                ownAveragePoints: data.own_record.average.points,
-                opponentsAveragePoints: data.opponents.average.points
+    $.get(url, function(data) {
+        const displayData = {
+            id: data.id,
+            TeamName: data.market,
+            TeamMascot: data.name,
+            PPG: data.own_record.average.points,
+            AP: data.opponents.average.points
         };
-
-        document.getElementById("statisticsDisplay").innerText = JSON.stringify(displayData, null, 2);
+        document.getElementById(`statisticsDisplay${teamNumber}`).innerText = JSON.stringify(displayData, null, 2);
     });
-        }
+}
     </script>
 </head>
 <body>
-    <button onclick="getLeagueHierarchy()">Load League Hierarchy</button>
-    <br><br>
-    <input type="text" id="teamName" placeholder="Enter Team Name">
-    <button onclick="searchTeam()">Search Team</button>
-    <p id="teamIdDisplay"></p>
-    <pre id="statisticsDisplay"></pre>
+    <div class="col-auto">
+        <button id="firstButton" onclick="getLeagueHierarchy()" class="btn btn-primary">click</button>
+    </div>
+    <div class="container mt-5">
+        <div class="row sticky-inputs">
+            <div class="col-6">
+                <h5 class="text-center">Team A</h5>
+                <input type="text" id="teamName1" class="form-control mb-2" placeholder="Enter First Team Name">
+                <div class="card mb-6">
+                    <div class="card-body">
+                        <pre id="statisticsDisplay1"></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <h5 class="text-center">Team B</h5>
+                <input type="text" id="teamName2" class="form-control mb-2" placeholder="Enter Second Team Name">
+                <div class="card mb-6">
+                    <div class="card-body">
+                        <pre id="statisticsDisplay2"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    <div class="row">
+        <button id="compareButton" onclick="searchAndCompareTeams()" class="btn btn-primary btn-block">Compare Teams</button>
+</div>
 </body>
 </html>
