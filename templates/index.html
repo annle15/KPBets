@@ -7,6 +7,14 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
     <style>
+        .form-control::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+        text-align: center;
+        opacity: 1; /* F
+        irefox */
+    }
+    .form-control {
+        text-align: center; /* Center text for input fields */
+    }
         .sticky-inputs {
             position: sticky;
             top: 0;
@@ -43,7 +51,10 @@
     </style>
     <script>
         let teamsData = []; // Global variable to hold teams data
-
+        let teamAPPG = null;
+let teamBPPG = null;
+let teamAAP = null;
+let teamBAP = null;
         function getLeagueHierarchy() {
             $.get('/get_league_hierarchy', function(data) {
                 teamsData = []; // Reset teams data
@@ -93,6 +104,49 @@ function getTeamStatistics(teamId, teamNumber) {
             AP: data.opponents.average.points
         };
         document.getElementById(`statisticsDisplay${teamNumber}`).innerText = JSON.stringify(displayData, null, 2);
+        if (teamNumber === 1) {
+            teamAPPG = data.own_record.average.points;
+            teamAAP = data.opponents.average.points
+        } else if (teamNumber === 2) {
+            teamBPPG = data.own_record.average.points;
+            teamBAP = data.opponents.average.points
+        }
+
+        // If data for both teams is available, perform calculations and update the display
+        if (teamAPPG !== null && teamBPPG !== null) {
+
+            const PPGSum = Math.abs(teamAPPG - teamBPPG);
+            const APSum = Math.abs(teamAAP - teamBAP);
+
+            let favor1 = teamAPPG > teamBPPG ? "Team A" : "Team B";
+            let favor2 = teamAAP < teamBAP ? "Team A" : "Team B";
+
+            let Total, FavoredTeam;
+            if (favor1 === favor2) {
+                Total = PPGSum + APSum;
+                FavoredTeam = favor1;
+            } else {
+                if (PPGSum > APSum) {
+                    FavoredTeam = favor1;
+                    Total = PPGSum - APSum;
+                } else {
+                    FavoredTeam = favor2;
+                    Total = APSum - PPGSum;
+            }
+        }
+            document.getElementById('teamAPPG').innerText = `Team A PPG: ${teamAPPG}`;
+            document.getElementById('teamAAP').innerText = `Team A AP: ${teamAAP}`;
+            document.getElementById('teamBPPG').innerText = `Team B PPG: ${teamBPPG}`;
+            document.getElementById('teamBAP').innerText = `Team B AP: ${teamBAP}`;
+            document.getElementById('PPGSum').innerText = `PPG Sum = ${PPGSum}`;
+            document.getElementById('APSum').innerText = `AP Sum = ${APSum}`;
+            document.getElementById('favoredPPG').innerText = `Favored PPG: ${favor1} `;
+            document.getElementById('favoredAP').innerText = `Favored AP: ${favor2}`;
+            document.getElementById('total').innerText = `Total Difference = ${Total}`;
+            document.getElementById('favoredTeam').innerText = `Favored Team = ${FavoredTeam}`;
+        }
+    }).fail(function() {
+        alert("Failed to load statistics for team " + teamNumber);
     });
 }
     </script>
@@ -101,11 +155,12 @@ function getTeamStatistics(teamId, teamNumber) {
     <div class="col-auto">
         <button id="firstButton" onclick="getLeagueHierarchy()" class="btn btn-primary">click</button>
     </div>
+    <div class="row">
     <div class="container mt-5">
         <div class="row sticky-inputs">
             <div class="col-6">
                 <h5 class="text-center">Team A</h5>
-                <input type="text" id="teamName1" class="form-control mb-2" placeholder="Enter First Team Name">
+                <input type="text" id="teamName1" class="form-control mb-2" placeholder="Enter Team A">
                 <div class="card mb-6">
                     <div class="card-body">
                         <pre id="statisticsDisplay1"></pre>
@@ -114,18 +169,38 @@ function getTeamStatistics(teamId, teamNumber) {
             </div>
             <div class="col-6">
                 <h5 class="text-center">Team B</h5>
-                <input type="text" id="teamName2" class="form-control mb-2" placeholder="Enter Second Team Name">
-                <div class="card mb-6">
+                <input type="text" id="teamName2" class="form-control mb-2" placeholder="Enter Team B">
+                <div class="card ">
                     <div class="card-body">
                         <pre id="statisticsDisplay2"></pre>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
         
     </div>
+    <!-- ... (rest of your HTML) ... -->
+<div class="container mt-5">
     <div class="row">
-        <button id="compareButton" onclick="searchAndCompareTeams()" class="btn btn-primary btn-block">Compare Teams</button>
+        <div class="col-12">
+            <p id="teamAPPG">Team A PPG: </p>
+            <p id="teamAAP">Team A AP: </p>
+            <p id="teamBPPG">Team B PPG: </p>
+            <p id="teamBAP">Team B AP: </p>
+            <p id="PPGSum"></p>
+            <p id="APSum"></p>
+            <p id="total">Total Difference: </p>
+            <p id="favoredPPG">Favored PPG: </p>
+            <p id="favoredAP">Favored AP: </p>
+            <p id="favoredTeam">Overall favored team:</p>
+        </div>
+    </div>
+</div>
+<!-- ... (rest of your HTML) ... -->
+
+    <div class="row">
+        <button id="compareButton" onclick="searchAndCompareTeams()" class="btn btn-primary btn-block">Calculate</button>
 </div>
 </body>
 </html>
