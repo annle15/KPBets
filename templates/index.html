@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NCAA Men's Basketball Data</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        let teamsData = []; // Global variable to hold teams data
+
+        function getLeagueHierarchy() {
+            $.get('/get_league_hierarchy', function(data) {
+                teamsData = []; // Reset teams data
+                data.divisions.forEach(division => {
+                    division.conferences.forEach(conference => {
+                        conference.teams.forEach(team => {
+                            teamsData.push(team);
+                        });
+                    });
+                });
+                alert("League hierarchy loaded. You can now search for a team.");
+            });
+        }
+
+        function searchTeam() {
+            const searchText = document.getElementById("teamName").value.toLowerCase();
+            const team = teamsData.find(team => 
+            team.name.toLowerCase() === searchText || 
+            (team.alias && team.alias.toLowerCase() === searchText) ||
+            (team.market && team.market.toLowerCase() === searchText)
+            );
+            if (team) {
+                document.getElementById("teamIdDisplay").innerText = "Team ID: " + team.id;
+                getTeamStatistics(team.id);
+            } else {
+                alert("Team not found. Please make sure you have the correct team name, alias, or market.");
+    }
+}
+
+        function getTeamStatistics(teamId) {
+            const seasonYear = "2023";
+            const seasonType = "REG";
+            const url = `/get_team_statistics/${seasonYear}/${seasonType}/${teamId}`;
+
+            $.get(url, function(data) {
+                const displayData = {
+                market: data.market,
+                name: data.name,
+                ownAveragePoints: data.own_record.average.points,
+                opponentsAveragePoints: data.opponents.average.points
+        };
+
+        document.getElementById("statisticsDisplay").innerText = JSON.stringify(displayData, null, 2);
+    });
+        }
+    </script>
+</head>
+<body>
+    <button onclick="getLeagueHierarchy()">Load League Hierarchy</button>
+    <br><br>
+    <input type="text" id="teamName" placeholder="Enter Team Name">
+    <button onclick="searchTeam()">Search Team</button>
+    <p id="teamIdDisplay"></p>
+    <pre id="statisticsDisplay"></pre>
+</body>
+</html>
